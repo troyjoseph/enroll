@@ -8,19 +8,16 @@ netid ='tcj29'
 password='tc2013j@cony'
 url = requests.get('http://studentcenter.cornell.edu', allow_redirects = True).url
 
-chromedriver = "/Users/troy/Downloads/chromedriver"
-os.environ["webdriver.chrome.driver"] = chromedriver
-driver = webdriver.Chrome(chromedriver)
+
 
 def addClass(className, cookies):
 	print className
-	_driver = webdriver.Chrome(chromedriver)
-	_driver.add_cookies(cookies)
+	_driver = webdriver.Firefox()
+	_driver.add_cookie(cookies)
 	_driver.get(baseurl)
 
 
-driver = webdriver.Chrome(chromedriver)
-
+driver = webdriver.Firefox()
 try:
 	driver.get(url)
 	driver.find_element_by_id('netid').send_keys(netid)
@@ -31,7 +28,7 @@ try:
 	baseurl = driver.current_url
 	cookies = driver.get_cookies()
 
-	thread.start_new_thread( addClass, ("name", ) )
+	thread.start_new_thread( addClass, ("name", cookies, ) )
 
 except Exception,e: print str(e)
 
