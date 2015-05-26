@@ -1,15 +1,15 @@
+#!/usr/bin/env python
 import login, wx, thread
 from panelLogin import PanelLogin
-from PanelTwo import PanelTwo
+from PanelTwo2 import PanelTwo
 import wx.grid as gridlib 
+import time
 
  
-########################################################################
 class MyForm(wx.Frame):
  
-    #----------------------------------------------------------------------
     def __init__(self, parent, title):
-        wx.Frame.__init__(self, parent, -1, title, size=(700, 400)) 
+        wx.Frame.__init__(self, parent, -1, title, size=(850, 450)) 
  
         self.panel_login = PanelLogin(self)
         self.panel_two = PanelTwo(self)
@@ -26,12 +26,13 @@ class MyForm(wx.Frame):
         switch_panels_menu_item = fileMenu.Append(wx.ID_ANY, 
                                                   "Switch Panels", 
                                                   "Some text")
-        self.Bind(wx.EVT_MENU, self.onSwitchPanels, 
-                  switch_panels_menu_item)
+        self.Bind(wx.EVT_MENU, self.onSwitchPanels, switch_panels_menu_item)
         menubar.Append(fileMenu, '&File')
         self.SetMenuBar(menubar)
- 
-    #----------------------------------------------------------------------
+        self.panel_login.SetFocus()
+        self.Layout()
+        
+    
     def onSwitchPanels(self, event):
         """"""
         if self.panel_login.IsShown():
@@ -43,24 +44,33 @@ class MyForm(wx.Frame):
             self.panel_login.Show()
             self.panel_two.Hide()
         self.Layout()
-    
-    def tryLogin(self, netid, password):
+
+    def changeFailsafeText(self):
+        self.failtext.SetLabel("Logging in....")
+        self.failtext.SetForegroundColour((253,253,253))
+        self.Layout()
+        
+    def tryLogin(self):
         l = login.Helper()
-        if (l.testLogin(netid, password) == False):
-            self.failtext.SetLabel("The NetID or password you entered is incorrect.")
-        else:
+        self.netidFinal = self.netid.GetValue()
+        self.passwordFinal =  self.password.GetValue()
+        if (l.testLogin(self.netidFinal, self.passwordFinal) == False):
+           self.failtext.SetLabel("The NetID or password you entered is incorrect.")
+           self.Layout()
+        else:    
+            self.btn.SetFocus()
             self.panel_login.Hide()
             self.panel_two.Show()
             self.Layout()
-            
 
-    def OnLogin(self, evt):
+    def OnLogin(self, event):
         """Event handler for the button click."""
-
-        self.failtext.SetLabel("Logging in....")
-        self.failtext.SetForegroundColour((253,253,253))
-        self.failtext.Refresh()
-        thread.start_new_thread(self.tryLogin, (self.netid.GetValue(),self.password.GetValue(), ) )
+        self.panel_login.SetFocus()
+        event.Skip()
+        thread.start_new_thread(self.changeFailsafeText, () )
+        thread.start_new_thread(self.tryLogin, () )
+        
+        
  
 # Run the program
 if __name__ == "__main__":
