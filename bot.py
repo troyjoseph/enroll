@@ -2,45 +2,35 @@
 #OSX ONLY b/c of use pf command+t, change for windows
 
 from splinter import Browser
-import requests, thread, time
+import requests, thread
 
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 
 netid ='tcj29'
 password='tc2013j@cony'
+url = requests.get('http://studentcenter.cornell.edu', allow_redirects = True).url
+
+driver = webdriver.Firefox()
+try:
+	driver.get(url)
+	driver.find_element_by_id('netid').send_keys(netid)
+	driver.find_element_by_id('password').send_keys(password)
+	driver.find_element_by_name('Submit').click()
+
+	baseurl = driver.current_url
+	thread.start_new_thread( addClass, ("name", ) )
+
+except Exception,e: print str(e)
+
+#finally:
+#	driver.close()
+
 
 def addClass(className):
 	print className
-	url = requests.get('http://studentcenter.cornell.edu', allow_redirects = True).url
-	_browser = Browser()	
-	_start = time.time()
-	_browser.visit(url)
-	_browser.find_by_id('netid').fill(netid)
-	_browser.find_by_id('password').fill(password)
-	_browser.find_by_name('Submit').click()
-
-	_browser.find_by_id('DERIVED_SSS_SCL_LINK_ADD_ENRL').click()
-	print(time.time()-_start)
-	time.sleep(1)
-	_browser.quit()
-
-name = 'hello'
-
-
-thread.start_new_thread( addClass, ("name", ) )
-thread.start_new_thread( addClass, ("name2", ) )
-
-url = requests.get('http://studentcenter.cornell.edu', allow_redirects = True).url
-browser = Browser()
-start = time.time()
-browser.visit(url)
-browser.find_by_id('netid').fill(netid)
-browser.find_by_id('password').fill(password)
-browser.find_by_name('Submit').click()
-
-browser.find_by_id('DERIVED_SSS_SCL_LINK_ADD_ENRL').click()
-print(time.time()-start)
-time.sleep(3)
-browser.quit()
-
+	_driver = webdriver.Firefox()
+	_driver.get(baseurl)
+	body = _driver.find_element_by_tag_name("body")
+	
+	
