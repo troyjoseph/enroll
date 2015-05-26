@@ -9,7 +9,6 @@ from bot import Bot
 
 
 class PanelTwo(wx.Panel):
-    """"""
 
     def better_bind(self, type, instance, handler, *args, **kwargs):
         self.Bind(type, lambda event: handler(event, *args, **kwargs), instance) 
@@ -31,14 +30,14 @@ class PanelTwo(wx.Panel):
         self.removeLinkedBtn = [0 for x in range(self.MAXCLASSES)] 
 
         for r in range (0, self.MAXCLASSES):
-            self.addLinkedBtn[r] = wx.StaticBitmap(self, -1, wx.Bitmap("images/add.png", wx.BITMAP_TYPE_ANY), (0, 0), (11, 11))
+            self.addLinkedBtn[r] = wx.StaticBitmap(self, -1, wx.Bitmap("src/images/add.png", wx.BITMAP_TYPE_ANY), (0, 0), (11, 11))
             self.addLinkedBtn[r].Bind(wx.EVT_LEFT_DOWN,  self.onAddTxt)
-            self.removeLinkedBtn[r] = wx.StaticBitmap(self, -1, wx.Bitmap("images/remove.png", wx.BITMAP_TYPE_ANY), (0, 0), (11, 11))
+            self.removeLinkedBtn[r] = wx.StaticBitmap(self, -1, wx.Bitmap("src/images/remove.png", wx.BITMAP_TYPE_ANY), (0, 0), (11, 11))
             self.removeLinkedBtn[r].Bind(wx.EVT_LEFT_DOWN, self.onRemoveTxt)
         
         #goBtn = wx.StaticBitmap(self, -1, wx.Bitmap("go_small.png", wx.BITMAP_TYPE_ANY), (0, 0), (50, 50))
         #self.goBtn.Bind(wx.EVT_LEFT_DOWN,  self.onGo)
-        bmp = wx.Bitmap("images/go.png", wx.BITMAP_TYPE_ANY)
+        bmp = wx.Bitmap("src/images/go.png", wx.BITMAP_TYPE_ANY)
         self.goBtn = SBitmapButton(self, wx.ID_ANY, bitmap=bmp)
         self.goBtn.Bind(wx.EVT_BUTTON, lambda event: self.onGo(event, parent) )
 
@@ -97,7 +96,7 @@ class PanelTwo(wx.Panel):
         self.Layout()
 
     def onTextChange(self, event, r , c):
-        print str(r)+str(c)
+        # print str(r)+str(c)
         thread.start_new_thread(self.changeText, (self.text[r][c],self.txt[r][c], ) )
 
     def changeText(self, text, txt):

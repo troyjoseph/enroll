@@ -1,9 +1,10 @@
 #!/usr/bin/env python
-import login, wx, thread, requests
-from panelLogin import PanelLogin
-from PanelTwo import PanelTwo
+import time, thread, wx, requests
+import src.login as login
+from src.panelLogin import PanelLogin
+from src.PanelTwo import PanelTwo
 import wx.grid as gridlib 
-import time
+
 
  
 class MyForm(wx.Frame):
@@ -54,14 +55,14 @@ class MyForm(wx.Frame):
         l = login.Helper()
         self.netidFinal = self.netid.GetValue()
         self.passwordFinal =  self.password.GetValue()
-        #if (l.testLogin(self.netidFinal, self.passwordFinal) == False):
-           #self.failtext.SetLabel("The NetID or password you entered is incorrect.")
-           #self.Layout()
-        #else:    
-        self.btn.SetFocus()
-        self.panel_login.Hide()
-        self.panel_two.Show()
-        self.Layout()
+        if (l.testLogin(self.netidFinal, self.passwordFinal) == False):
+           self.failtext.SetLabel("The NetID or password you entered is incorrect.")
+           self.Layout()
+        else:    
+	        self.btn.SetFocus()
+	        self.panel_login.Hide()
+	        self.panel_two.Show()
+	        self.Layout()
 
     def OnLogin(self, event):
         """Event handler for the button click."""
