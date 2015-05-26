@@ -24,6 +24,7 @@ class Nbr():
         finally:
             if (index == -1):
                 print "Could not find class!"
+                return ''
             else:
                 url = dict['responseData']['results'][index]['url']
                 return url[53:-5] + " " + url[-4:]

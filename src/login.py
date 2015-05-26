@@ -18,6 +18,6 @@ class Helper():
             r = session.get(url, allow_redirects=True, verify=True)
             r2 = session.post(
                 r.url, headers=headers, data=payload, allow_redirects=True, verify = True)
-            return "Unable to log in" not in r2.text and "You did not supply a NetID" not in r2.text  
+            return "Unable to log in" not in r2.text and "You did not supply a NetID" not in r2.text and 'Student Center' in r2.text
         except:
             return False
