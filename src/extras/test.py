@@ -1,10 +1,14 @@
 #test
 
-from alert import Bot
+import os, sys, inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir) 
+from bot import Bot
+
 b = Bot()
 
-b.alert('tcj29','tc2013j@cony', '6133', only = False)
-#b.addClass('tcj29','tc2013j@cony','12576', '12578',' ', test = True, hidden = True)  
+b.addClass('tcj29','tc2013j@cony','1234', test = True)  
 
 #b.addClass('tcj29','tc2013j@cony','4468', '','', test = True)  #Single Class
 
