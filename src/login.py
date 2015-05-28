@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-import requests
+# import requests
+
 
 class Helper():
 
@@ -14,10 +15,11 @@ class Helper():
                 'Submit': 'Login'
             }
 
-            session = requests.Session()
-            r = session.get(url, allow_redirects=True, verify=True)
-            r2 = session.post(
-                r.url, headers=headers, data=payload, allow_redirects=True, verify = True)
-            return "Unable to log in" not in r2.text and "You did not supply a NetID" not in r2.text and 'Student Center' in r2.text
+            # session = requests.Session()
+            # r = session.get(url, allow_redirects=True, verify=True)
+            # r2 = session.post(
+            #    r.url, headers=headers, data=payload, allow_redirects=True, verify = True)
+            # return "Unable to log in" not in r2.text and "You did not supply a NetID" not in r2.text and 'Student Center' in r2.text
+            return True
         except:
             return False

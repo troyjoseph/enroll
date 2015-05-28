@@ -1,20 +1,20 @@
-import requests
+# import requests
 import json
+import unirest
 
-import urllib3
-urllib3.disable_warnings()
 
 class Nbr():
 
     def get(self, semester, nbr):
         url = "http://ajax.googleapis.com/ajax/services/search/web?v=1.0&q=site:classes.cornell.edu/browse/roster/SP15/class/+"
         try:
-            r = requests.get(url + str(nbr))
+            # r = requests.get(url + str(nbr))
+            r = unirest.get(url+str(nbr))
         except:
             print "No internet connection!"
             return
-        dict = json.loads(r.text)
-
+        # dict = json.loads(r.text)
+        dict = json.loads(r.body)
         index = -1
         try:
             for i in range(len(dict['responseData']['results'])):

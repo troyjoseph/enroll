@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import requests
 import time
 import datetime
 import logging
@@ -35,8 +34,9 @@ class Bot():
         # define settings from preference file #
         self.getPreferences(password)
 
-        url = requests.get(
-            'http://studentcenter.cornell.edu', allow_redirects=True).url
+        url = 'http://studentcenter.cornell.edu/'
+        #requests.get(
+            #'http://studentcenter.cornell.edu', allow_redirects=True).url
 
         # LOG INTO STUDENT CENTER
         self.logIntoStudentCenter(url, netid, password)
