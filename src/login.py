@@ -1,10 +1,15 @@
 #!/usr/bin/env python
 # import requests
+import unirest
+import urllib2
 
 
 class Helper():
 
     def testLogin(self, netid, password):
+        if(netid == '' or password == ''):
+            return False
+
         try:
             url = 'http://studentcenter.cornell.edu'
             headers = {'User-Agent': 'Mozilla/5.0'}
@@ -15,11 +20,9 @@ class Helper():
                 'Submit': 'Login'
             }
 
-            # session = requests.Session()
-            # r = session.get(url, allow_redirects=True, verify=True)
-            # r2 = session.post(
-            #    r.url, headers=headers, data=payload, allow_redirects=True, verify = True)
-            # return "Unable to log in" not in r2.text and "You did not supply a NetID" not in r2.text and 'Student Center' in r2.text
-            return True
+            url = urllib2.urlopen(url).geturl()
+            response = unirest.post(url, headers=headers, params=payload).body
+            return 'Unable to log in' not in str(response)
+        
         except:
             return False
