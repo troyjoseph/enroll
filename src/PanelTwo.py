@@ -1,5 +1,6 @@
 import wx
 import thread
+import sys
 from checker import Nbr
 import wx.lib.agw.shapedbutton as SB
 from wx.lib.agw.shapedbutton import SButton, SBitmapButton
@@ -12,6 +13,11 @@ class PanelTwo(wx.Panel):
     def better_bind(self, type, instance, handler, *args, **kwargs):
         self.Bind(
             type, lambda event: handler(event, *args, **kwargs), instance)
+
+    def resource_path(self, relative_path):
+        if hasattr(sys, '_MEIPASS'): # pyinstaller build
+            return 'run.app/Contents/Resources/' + relative_path
+        return 'src/images/' + relative_path # testing build
 
     def __init__(self, parent):
         self.MAXCLASSES = Preferences.MAXCLASSES
@@ -31,15 +37,16 @@ class PanelTwo(wx.Panel):
 
         for r in range(0, self.MAXCLASSES):
             self.addLinkedBtn[r] = wx.StaticBitmap(
-                self, -1, wx.Bitmap("src/images/add.png", wx.BITMAP_TYPE_ANY), (0, 0), (11, 11))
+                self, -1, wx.Bitmap(self.resource_path('add.png'), wx.BITMAP_TYPE_ANY), (0, 0), (11, 11))
             self.addLinkedBtn[r].Bind(wx.EVT_LEFT_DOWN,  self.onAddTxt)
             self.removeLinkedBtn[r] = wx.StaticBitmap(
-                self, -1, wx.Bitmap("src/images/remove.png", wx.BITMAP_TYPE_ANY), (0, 0), (11, 11))
+                self, -1, wx.Bitmap(self.resource_path('remove.png'), wx.BITMAP_TYPE_ANY), (0, 0), (11, 11))
             self.removeLinkedBtn[r].Bind(wx.EVT_LEFT_DOWN, self.onRemoveTxt)
 
         # goBtn = wx.StaticBitmap(self, -1, wx.Bitmap("go_small.png", wx.BITMAP_TYPE_ANY), (0, 0), (50, 50))
         # self.goBtn.Bind(wx.EVT_LEFT_DOWN,  self.onGo)
-        bmp = wx.Bitmap("src/images/go.png", wx.BITMAP_TYPE_ANY)
+        bmp = wx.Bitmap(self.resource_path('go.png')
+            , wx.BITMAP_TYPE_ANY)
         self.goBtn = SBitmapButton(self, wx.ID_ANY, bitmap=bmp)
         self.goBtn.Bind(wx.EVT_BUTTON, lambda event: self.onGo(event, parent))
 
