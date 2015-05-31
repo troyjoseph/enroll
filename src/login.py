@@ -23,6 +23,6 @@ class Helper():
             url = urllib2.urlopen(url).geturl()
             response = unirest.post(url, headers=headers, params=payload).body
             return 'Unable to log in' not in str(response)
-        
+
         except:
             return False
