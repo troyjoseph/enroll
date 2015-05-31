@@ -165,7 +165,6 @@ class Bot():
                 'DERIVED_REGFRM1_SSR_PB_ADDTOLIST2$44$').click()
         logging.warning(
             'BOT @' + str(self.className) + ': Entered class Nbr semester')
-        src = self.driver.page_source
         if('The class number entered is a duplicate.  Try another'):
             logging.error('BOT @' + str(self.className) +
                           ': The class number eneted is a duplicate. Proceeding to compelte enrollment')
@@ -174,25 +173,23 @@ class Bot():
             self._screentShotCount += 1
             self.completeEnrollment()
 
-    def clickNextToHome(self):
+    def clickNextToHome(self, count = 0):
         # Click next until we get to the home page
-        _home = False
-        count = 0
-        while(not _home):
-            logging.warning('BOT @' + str(self.className) + ': Clicking next')
-            count += 1
-            with wait_for_page_load(self.driver):
-                self.driver.find_element_by_id(
-                    'DERIVED_CLS_DTL_NEXT_PB').click()
-            src = self.driver.page_source
-            if('your Shopping Cart and when you are satisfied' in src):
-                _home = True
-            if (count > 10):
-                driver.save_screenshot(
+        src = self.driver.page_source
+        if('your Shopping Cart and when you are satisfied' in src):
+                return
+        if (count > 10):
+            self.driver.save_screenshot(
                     'bot_' + str(self.className) + '_error_screenshot_' + str(self._screentShotCount) + '.png')
-                self._screentShotCount += 1
-                logging.error('BOT @' + str(self.className) +
+            self._screentShotCount += 1
+            logging.error('BOT @' + str(self.className) +
                               ': Failed to return home after 10 clicks. Screenshot Saved')
+
+        logging.warning('BOT @' + str(self.className) + ': Clicking next')
+        with wait_for_page_load(self.driver):
+            self.driver.find_element_by_id(
+                'DERIVED_CLS_DTL_NEXT_PB').click()
+        return self.clickNextToHome(count + 1)
 
     def completeEnrollment(self):
         # finish clicking to the end, don't actually enroll if in test mode
