@@ -3,6 +3,7 @@
 import time
 import datetime
 import logging
+import urllib2
 from sys import stdout
 from preferences import Preferences
 import warnings
@@ -35,8 +36,7 @@ class Bot():
         self.getPreferences(password)
 
         url = 'http://studentcenter.cornell.edu/'
-        #requests.get(
-            #'http://studentcenter.cornell.edu', allow_redirects=True).url
+        url = urllib2.urlopen(url).geturl()
 
         # LOG INTO STUDENT CENTER
         self.logIntoStudentCenter(url, netid, password)
@@ -45,7 +45,7 @@ class Bot():
         self.selectSemester()
 
         # WAIT FOR APPOINTMENT
-        self.waitForEnrollmentWindow(Preferences.gradeLevel)
+        self.waitForEnrollmentWindow(self.year)
 
         self._start = time.time()
 
@@ -53,8 +53,8 @@ class Bot():
         self.enterClassNbr()
 
         # Handle adding disscusion and/or lab
-        if (discussion != None and self.is_integer(discussion)):
-            if (lab != None and self.is_integer(lab)):
+        if (discussion is not None and self.is_integer(discussion)):
+            if (lab is not None and self.is_integer(lab)):
                 logging.warning(
                     'BOT @' + str(self.className) + ': Trying to add discussion and lab')
                 self.addDiscussion(discussion, only=False)
@@ -63,7 +63,7 @@ class Bot():
                 logging.warning(
                     'BOT @' + str(self.className) + ': Trying to add discussion')
                 self.addDiscussion(discussion, only=True)
-        elif (lab != None and self.is_integer(lab)):
+        elif (lab is not None and self.is_integer(lab)):
             logging.warning(
                 'BOT @' + str(self.className) + ': Trying to add lab')
             self.addLab(lab, only=True)
@@ -88,11 +88,11 @@ class Bot():
         if (int(Preferences.gradeLevel) == 1 or int(Preferences.gradeLevel) == 2 or
                 int(Preferences.gradeLevel) == 3 or int(Preferences.gradeLevel) == 4):
             # 1 = freshman, 2 = sophomore, 3 = junior, 4 = senior
-            year = Preferences.gradeLevel
+            self.year = Preferences.gradeLevel
         else:
             warnings.warn(
                 'Invalid Grade Level preferences. Using freshman by default')
-            year = 1
+            self.year = 1
 
     def logIntoStudentCenter(self, url, netid, password):
         # Log into Student Center
@@ -124,8 +124,7 @@ class Bot():
                 waiting = False
                 self.driver.execute_script('location.reload()')
                 loaded = False
-                # keep track of how long app took to get class
-                _time = time.time()
+
                 while(not loaded):
                     src = self.driver.page_source
                     if('Select classes to add' in src):
@@ -165,7 +164,8 @@ class Bot():
                 'DERIVED_REGFRM1_SSR_PB_ADDTOLIST2$44$').click()
         logging.warning(
             'BOT @' + str(self.className) + ': Entered class Nbr semester')
-        if('The class number entered is a duplicate.  Try another'):
+        src = self.driver.page_source
+        if('The class number entered is a duplicate. Try another' in src):
             logging.error('BOT @' + str(self.className) +
                           ': The class number eneted is a duplicate. Proceeding to compelte enrollment')
             self.driver.save_screenshot(
@@ -173,17 +173,17 @@ class Bot():
             self._screentShotCount += 1
             self.completeEnrollment()
 
-    def clickNextToHome(self, count = 0):
+    def clickNextToHome(self, count=0):
         # Click next until we get to the home page
         src = self.driver.page_source
         if('your Shopping Cart and when you are satisfied' in src):
-                return
+            return
         if (count > 10):
             self.driver.save_screenshot(
-                    'bot_' + str(self.className) + '_error_screenshot_' + str(self._screentShotCount) + '.png')
+                'bot_' + str(self.className) + '_error_screenshot_' + str(self._screentShotCount) + '.png')
             self._screentShotCount += 1
             logging.error('BOT @' + str(self.className) +
-                              ': Failed to return home after 10 clicks. Screenshot Saved')
+                          ': Failed to return home after 10 clicks. Screenshot Saved')
 
         logging.warning('BOT @' + str(self.className) + ': Clicking next')
         with wait_for_page_load(self.driver):
@@ -203,18 +203,26 @@ class Bot():
             self._screentShotCount += 1
             logging.error('BOT @' + str(self.className) +
                           ': Failed to Proceed to Step 2 will try to remove classes and try again. Screenshot Saved')
+
+        logging.warning(
+            'BOT @' + str(self.className) + ': On final page, ready to enroll')
         if (not self._testMode):
             with wait_for_page_load(self.driver):
                 self.driver.find_element_by_id(
                     'DERIVED_REGFRM1_SSR_PB_SUBMIT').click()
-
-        src = self.driver.page_source
-        if('Error: Unable to complete your request' in src):
-            self.driver.save_screenshot(
-                'bot_' + str(self.className) + '_error_screenshot_' + str(self._screentShotCount) + '.png')
-            self._screentShotCount += 1
-            logging.error('BOT @' + str(self.className) +
-                          ': Failed to Finish Enrolling. Screenshot Saved')
+            src = self.driver.page_source
+            if('Error: Unable to complete your request' in src):
+                self.driver.save_screenshot(
+                    'bot_' + str(self.className) + '_error_screenshot_' + str(self._screentShotCount) + '.png')
+                self._screentShotCount += 1
+                logging.error('BOT @' + str(self.className) +
+                              ': Failed to Finish Enrolling. Screenshot Saved')
+            else:
+                logging.warning(
+                    'BOT @' + str(self.className) + ': Enrollment complete')
+        else:
+            logging.warning(
+                'BOT @' + str(self.className) + ': Test Mode, did not compelte enorllment')
 
         _time = time.time() - self._start
         logging.warning(
@@ -267,7 +275,7 @@ class Bot():
             except:
                 continue
         x = 5
-        while(x < length and _found == False):
+        while(x < length and not _found):
             self.driver.find_element_by_name(
                 'SSR_CLS_TBL_' + table + '$fdown$img$0').click()
             for i in range(2, tablelength + 2):
@@ -325,7 +333,7 @@ class Bot():
             except:
                 continue
         x = 5
-        while(x < length and _found == False):
+        while(x < length and not _found):
             self.driver.find_element_by_name(
                 'SSR_CLS_TBL_' + table + '$fdown$img$0').click()
             for i in range(2, tablelength + 2):
