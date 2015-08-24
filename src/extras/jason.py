@@ -29,9 +29,9 @@ class Bot():
             self.driver.find_element_by_name('Submit').click()
         self.loadingNOTO('Student Center')
         print 'Logged in!'
-        self.driver.find_element_by_id('DERIVED_SSS_SCL_LINK_ADD_ENRL').click()
+        self.driver.find_element_by_id('DERIVED_SSS_SCR_SSS_LINK_ANCHOR3').click()
 
-        # SELECT SEMESTER
+        '''# SELECT SEMESTER
         xpath = '//*[@id="SSR_DUMMY_RECV1$scroll$0"]/tbody/tr[5]/td[1]/input'
         self.driver.find_element_by_xpath(xpath).click()
         self.driver.find_element_by_id('DERIVED_SSS_SCT_SSR_PB_GO').click()
@@ -45,7 +45,7 @@ class Bot():
             self.repeat()
 
         time.sleep(3)
-        self.driver.close()
+        self.driver.close()'''
 
     def add(self, classname, discussion):
         self.driver.find_element_by_id('DERIVED_REGFRM1_CLASS_NBR$42$').send_keys(classname)

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import sys
 import time
 import datetime
 import logging
@@ -9,6 +10,7 @@ from preferences import Preferences
 import warnings
 from wait import wait_for_page_load
 from selenium import webdriver
+import getpass
 
 
 class Bot():
@@ -28,7 +30,8 @@ class Bot():
         except ValueError:
             return False
 
-    def addClass(self, netid, password, className, discussion=None, lab=None, test=False):
+    def addClass(self, netid, password, className, discussion=None, lab=None, test=False, repeat=False):
+        self.repeat = repeat
         self._testMode = test
         self.className = className
         logging.warning('BOT @' + str(self.className) + ': Bot initailized')
@@ -42,10 +45,10 @@ class Bot():
         self.logIntoStudentCenter(url, netid, password)
 
         # SELECT SEMESTER
-        self.selectSemester()
+        #self.selectSemester()
 
         # WAIT FOR APPOINTMENT
-        self.waitForEnrollmentWindow(self.year)
+        #self.waitForEnrollmentWindow(self.year)
 
         self._start = time.time()
 
@@ -73,6 +76,13 @@ class Bot():
 
         # PROCEED to Complete Enrollment
         self.completeEnrollment()
+
+        if (self._testMode):
+            time.sleep(1)
+        else:
+            time.sleep(10)
+
+        self.driver.close()
 
     def getPreferences(self, password):
         # define settings from preference file, needs password to determine
@@ -104,7 +114,12 @@ class Bot():
                 self.driver.find_element_by_name('Submit').click()
         logging.warning(
             'BOT @' + str(self.className) + ': Logged into Student Center')
-        self.driver.find_element_by_id('DERIVED_SSS_SCL_LINK_ADD_ENRL').click()
+
+        # Click the 'enroll' button on the main page
+        with wait_for_page_load(self.driver):
+            self.driver.find_element_by_id(
+                'DERIVED_SSS_SCR_SSS_LINK_ANCHOR3').click()
+        
 
     def waitForEnrollmentWindow(self, year):
         if(int(year) == 1):  # freshman
@@ -158,10 +173,10 @@ class Bot():
     def enterClassNbr(self):
         # Enter class nbr on main 'add' page
         self.driver.find_element_by_id(
-            'DERIVED_REGFRM1_CLASS_NBR$42$').send_keys(self.className)
+            'DERIVED_REGFRM1_CLASS_NBR').send_keys(self.className)
         with wait_for_page_load(self.driver):
             self.driver.find_element_by_id(
-                'DERIVED_REGFRM1_SSR_PB_ADDTOLIST2$44$').click()
+                'DERIVED_REGFRM1_SSR_PB_ADDTOLIST2$9$').click()
         logging.warning(
             'BOT @' + str(self.className) + ': Entered class Nbr semester')
         src = self.driver.page_source
@@ -176,7 +191,7 @@ class Bot():
     def clickNextToHome(self, count=0):
         # Click next until we get to the home page
         src = self.driver.page_source
-        if('your Shopping Cart and when you are satisfied' in src):
+        if('has been added to your Shopping Cart' in src):
             return
         if (count > 10):
             self.driver.save_screenshot(
@@ -186,16 +201,21 @@ class Bot():
                           ': Failed to return home after 10 clicks. Screenshot Saved')
 
         logging.warning('BOT @' + str(self.className) + ': Clicking next')
+        # FIX ME, this wait?
         with wait_for_page_load(self.driver):
-            self.driver.find_element_by_id(
-                'DERIVED_CLS_DTL_NEXT_PB').click()
+            try: 
+                self.driver.find_element_by_xpath('//a[contains(@id, "DERIVED_CLS_DTL_NEXT_PB")]').click()
+            except Exception as e:
+                print e
+                logging.warning('BOT @' + str(self.className) + ': Could not find home button, attempting to contiune')
+                return
         return self.clickNextToHome(count + 1)
 
     def completeEnrollment(self):
         # finish clicking to the end, don't actually enroll if in test mode
-        with wait_for_page_load(self.driver):
-            self.driver.find_element_by_id(
-                'DERIVED_REGFRM1_LINK_ADD_ENRL').click()
+        #with wait_for_page_load(self.driver):
+        self.driver.find_element_by_xpath(
+                '//a[contains(@id, "DERIVED_REGFRM1_LINK_ADD_ENRL")]').click()
         src = self.driver.page_source
         if('Finish Enrolling to process your request for the classes listed below' not in src):
             self.driver.save_screenshot(
@@ -228,19 +248,23 @@ class Bot():
         logging.warning(
             'BOT @' + str(self.className) + ': Time to complete: ' + str(_time))
 
-        if (self._testMode):
-            time.sleep(1)
-        else:
-            time.sleep(10)
-
-        self.driver.close()
+        # keep trying if on repeat
+        if self.repeat:
+            self.driver.find_element_by_id(
+                    'DERIVED_REGFRM1_SSR_LINK_STARTOVER').click()
+            time.sleep(4)
+            self.completeEnrollment()
+        
 
     def addDiscussion(self, discussion, only):
+        time.sleep(4) # FIXME: this didn't wait to load. What clicks this?
         if (only):
-            xpath = '//*[@id="SSR_CLS_TBL_RE$scroll$0"]/tbody/tr[1]/td/table/tbody/tr['
+            xpath = '//*[@id="SSR_CLS_TBL_RE_CLASS_NBR$'
+            buttonpath = '//*[@id="SSR_CLS_TBL_RE$sels$' # '(number)$$0"]'
             table = 'RE'
         else:
-            xpath = '//*[@id="SSR_CLS_TBL_R1$scroll$0"]/tbody/tr[2]/td/table/tbody/tr['
+            xpath = '//*[@id="SSR_CLS_TBL_R1_CLASS_NBR$'
+            buttonpath = '//*[@id="SSR_CLS_TBL_R1$sels$' # '(number)$$0"]'
             table = 'R1'
         try:
             if (only):
@@ -263,16 +287,17 @@ class Bot():
                             ': Could not find discussion table-length. Using defaults')
 
         _found = False
-        for i in range(2, tablelength + 2):
+        for i in range(0, tablelength):
             try:
                 e = self.driver.find_element_by_xpath(
-                    (xpath + str(i) + ']/td[2]/span')).text
+                    (xpath + str(i) + '"]' )).text
                 if (str(e) == str(discussion)):
                     _found = True
                     self.driver.find_element_by_xpath(
-                        xpath + str(i) + ']/td[1]/input').click()
+                        buttonpath + str(i) + '$$0"]' ).click()
                     break
-            except:
+            except Exception as e:
+                print e
                 continue
         x = 5
         while(x < length and not _found):
@@ -281,11 +306,11 @@ class Bot():
             for i in range(2, tablelength + 2):
                 try:
                     e = self.driver.find_element_by_xpath(
-                        (xpath + str(i) + ']/td[2]/span')).text
+                        (xpath + str(i) + '"]' )).text
                     if (str(e) == str(discussion)):
                         _found = True
                         self.driver.find_element_by_xpath(
-                            xpath + str(i) + ']/td[1]/input').click()
+                            buttonpath + str(i) + '$$0"]' ).click()
                         break
                 except:
                     continue
@@ -294,6 +319,7 @@ class Bot():
             'BOT @' + str(self.className) + ': Successfully selected discussion')
 
     def addLab(self, lab, only):
+         # FIXME: do xpaths like the disccusion section
         if (only):
             xpath = '//*[@id="SSR_CLS_TBL_RE$scroll$0"]/tbody/tr[1]/td/table/tbody/tr['
             table = 'RE'
@@ -350,3 +376,28 @@ class Bot():
             x += 5
         logging.warning(
             'BOT @' + str(self.className) + ': Successfully selected lab')
+
+if __name__ == '__main__':
+    if len(sys.argv) != 4 and len(sys.argv) != 3:
+        print 'Wrong number of args!'
+        print len(sys.argv)
+        sys.exit(1)
+
+    b = Bot()
+
+    # Get username
+    netid = str(sys.argv[1])
+
+    # Get password
+    password =  'tc2013j@cony' # getpass.getpass("Password:")
+
+    # Get class number
+    classnumber = str(sys.argv[2])
+
+    # Get section number
+    if len(sys.argv) == 4:
+        secnumber = str(sys.argv[3])
+        b.addClass(netid, password, classnumber, secnumber, repeat=True)
+    else:
+        secnumber = str(sys.argv[3])
+        b.addClass(netid, password, classnumber, repeat=True)
