@@ -1,16 +1,18 @@
 #!/usr/bin/env python
-
 import sys
+from sys import stdout
 import time
 import datetime
+
+import warnings
+import getpass
 import logging
 import urllib2
-from sys import stdout
+
 from preferences import Preferences
-import warnings
-from wait import wait_for_page_load
+
 from selenium import webdriver
-import getpass
+from wait import wait_for_page_load
 
 
 class Bot():
@@ -34,18 +36,20 @@ class Bot():
         self.repeat = repeat
         self._testMode = test
         self.className = className
+        self.netid = netid
+        self.password = password
         logging.warning('BOT @' + str(self.className) + ': Bot initailized')
         # define settings from preference file #
         self.getPreferences(password)
 
-        url = 'http://studentcenter.cornell.edu/'
-        url = urllib2.urlopen(url).geturl()
+        self.url = 'http://studentcenter.cornell.edu/'
+        #self.url = urllib2.urlopen(self.url).geturl()
 
         # LOG INTO STUDENT CENTER
-        self.logIntoStudentCenter(url, netid, password)
+        self.goHome()
 
         # SELECT SEMESTER
-        #self.selectSemester()
+        self.selectSemester()
 
         # WAIT FOR APPOINTMENT
         #self.waitForEnrollmentWindow(self.year)
@@ -53,7 +57,7 @@ class Bot():
         self._start = time.time()
 
         # ENTER CLASS NBR
-        self.enterClassNbr()
+        '''self.enterClassNbr()
 
         # Handle adding disscusion and/or lab
         if (discussion is not None and self.is_integer(discussion)):
@@ -72,7 +76,7 @@ class Bot():
             self.addLab(lab, only=True)
 
         # Click next until we get back to the home page
-        self.clickNextToHome()
+        self.clickNextToHome()'''
 
         # PROCEED to Complete Enrollment
         self.completeEnrollment()
@@ -104,16 +108,21 @@ class Bot():
                 'Invalid Grade Level preferences. Using freshman by default')
             self.year = 1
 
-    def logIntoStudentCenter(self, url, netid, password):
-        # Log into Student Center
-        self.driver.get(url)
-        self.driver.find_element_by_id('netid').send_keys(netid)
-        if (password != ''):
-            self.driver.find_element_by_id('password').send_keys(password)
-            with wait_for_page_load(self.driver):
-                self.driver.find_element_by_name('Submit').click()
-        logging.warning(
-            'BOT @' + str(self.className) + ': Logged into Student Center')
+    def goHome(self):
+        # Got to student center
+        with wait_for_page_load(self.driver):
+            self.driver.get(self.url)
+        src = self.driver.page_source
+        
+        # if necessary, log in.
+        if('CUWebLogin' in src):
+            self.driver.find_element_by_id('netid').send_keys(self.netid)
+            if (self.password != ''):
+                self.driver.find_element_by_id('password').send_keys(self.password)
+                with wait_for_page_load(self.driver):
+                    self.driver.find_element_by_name('Submit').click()
+            logging.warning(
+                'BOT @' + str(self.className) + ': Logged into Student Center')
 
         # Click the 'enroll' button on the main page
         with wait_for_page_load(self.driver):
@@ -159,7 +168,7 @@ class Bot():
 
     def selectSemester(self):
         # Select Semester
-        xpath = '//*[@id="SSR_DUMMY_RECV1$scroll$0"]/tbody/tr[3]/td[1]/input'
+        xpath = '//*[@id="SSR_DUMMY_RECV1$sels$2$$0"]'
         try:
             self.driver.find_element_by_xpath(xpath).click()
         except Exception:
@@ -174,7 +183,7 @@ class Bot():
         # Enter class nbr on main 'add' page
         self.driver.find_element_by_id(
             'DERIVED_REGFRM1_CLASS_NBR').send_keys(self.className)
-        with wait_for_page_load(self.driver):
+        with wait_for_page_load(self.driver, 'Select classes to add'):
             self.driver.find_element_by_id(
                 'DERIVED_REGFRM1_SSR_PB_ADDTOLIST2$9$').click()
         logging.warning(
@@ -202,7 +211,7 @@ class Bot():
 
         logging.warning('BOT @' + str(self.className) + ': Clicking next')
         # FIX ME, this wait?
-        with wait_for_page_load(self.driver):
+        with wait_for_page_load(self.driver, 'Select classes to add'):
             try: 
                 self.driver.find_element_by_xpath('//a[contains(@id, "DERIVED_CLS_DTL_NEXT_PB")]').click()
             except Exception as e:
@@ -214,50 +223,65 @@ class Bot():
     def completeEnrollment(self):
         # finish clicking to the end, don't actually enroll if in test mode
         #with wait_for_page_load(self.driver):
-        self.driver.find_element_by_xpath(
-                '//a[contains(@id, "DERIVED_REGFRM1_LINK_ADD_ENRL")]').click()
-        src = self.driver.page_source
-        if('Finish Enrolling to process your request for the classes listed below' not in src):
-            self.driver.save_screenshot(
-                'bot_' + str(self.className) + '_error_screenshot_' + str(self._screentShotCount) + '.png')
-            self._screentShotCount += 1
-            logging.error('BOT @' + str(self.className) +
-                          ': Failed to Proceed to Step 2 will try to remove classes and try again. Screenshot Saved')
-
-        logging.warning(
-            'BOT @' + str(self.className) + ': On final page, ready to enroll')
-        if (not self._testMode):
-            with wait_for_page_load(self.driver):
-                self.driver.find_element_by_id(
-                    'DERIVED_REGFRM1_SSR_PB_SUBMIT').click()
+        try:    
+            self.driver.find_element_by_xpath(
+                    '//a[contains(@id, "DERIVED_REGFRM1_LINK_ADD_ENRL")]').click()
             src = self.driver.page_source
-            if('Error: Unable to complete your request' in src):
+            if('Finish Enrolling to process your request for the classes listed below' not in src):
                 self.driver.save_screenshot(
                     'bot_' + str(self.className) + '_error_screenshot_' + str(self._screentShotCount) + '.png')
                 self._screentShotCount += 1
                 logging.error('BOT @' + str(self.className) +
-                              ': Failed to Finish Enrolling. Screenshot Saved')
+                              ': Failed to Proceed to Step 2 will try to remove classes and try again. Screenshot Saved')
+
+            logging.warning(
+                'BOT @' + str(self.className) + ': On final page, ready to enroll')
+            if (not self._testMode):
+                with wait_for_page_load(self.driver):
+                    self.driver.find_element_by_id(
+                        'DERIVED_REGFRM1_SSR_PB_SUBMIT').click()
+                src = self.driver.page_source
+                if('Error: Unable to complete your request' in src):
+                    self.driver.save_screenshot(
+                        'bot_' + str(self.className) + '_error_screenshot_' + str(self._screentShotCount) + '.png')
+                    self._screentShotCount += 1
+                    logging.error('BOT @' + str(self.className) +
+                                  ': Failed to Finish Enrolling. Screenshot Saved')
+                else:
+                    logging.warning(
+                        'BOT @' + str(self.className) + ': Enrollment complete')
             else:
                 logging.warning(
-                    'BOT @' + str(self.className) + ': Enrollment complete')
-        else:
+                    'BOT @' + str(self.className) + ': Test Mode, did not compelte enorllment')
+
+            _time = time.time() - self._start
             logging.warning(
-                'BOT @' + str(self.className) + ': Test Mode, did not compelte enorllment')
+                'BOT @' + str(self.className) + ': Time to complete: ' + str(_time))
 
-        _time = time.time() - self._start
-        logging.warning(
-            'BOT @' + str(self.className) + ': Time to complete: ' + str(_time))
-
-        # keep trying if on repeat
-        if self.repeat:
-            self.driver.find_element_by_id(
-                    'DERIVED_REGFRM1_SSR_LINK_STARTOVER').click()
-            time.sleep(4)
-            self.completeEnrollment()
+            # keep trying if on repeat
+            if self.repeat:
+                with wait_for_page_load(self.driver, text='status report for enrollment'):
+                    self.driver.find_element_by_xpath(
+                    '//a[contains(@id, "DERIVED_REGFRM1_SSR_LINK_STARTOVER")]').click()
+                time.sleep(.3)
+                self.completeEnrollment()
         
+        except Exception as e:
+            print 'go home', str(e)
+            logging.error('BOT @' + str(self.className) +
+                          'Error completeing enrollment, returning home')
+            logging.error('BOT @' + str(self.className) +
+                          'Error: ' + str(e))
+            self.goHome()
+            self.selectSemester()
+            self.completeEnrollment()
+
 
     def addDiscussion(self, discussion, only):
-        time.sleep(4) # FIXME: this didn't wait to load. What clicks this?
+        #time.sleep(4) # FIXME: this didn't wait to load. What clicks this?
+        with wait_for_page_load(self.driver, extraXpath='//*[@id="SSR_CLS_TBL_RE_CLASS_NBR$1"]'):
+            pass
+
         if (only):
             xpath = '//*[@id="SSR_CLS_TBL_RE_CLASS_NBR$'
             buttonpath = '//*[@id="SSR_CLS_TBL_RE$sels$' # '(number)$$0"]'
@@ -377,6 +401,7 @@ class Bot():
         logging.warning(
             'BOT @' + str(self.className) + ': Successfully selected lab')
 
+
 if __name__ == '__main__':
     if len(sys.argv) != 4 and len(sys.argv) != 3:
         print 'Wrong number of args!'
@@ -389,7 +414,7 @@ if __name__ == '__main__':
     netid = str(sys.argv[1])
 
     # Get password
-    password =  'tc2013j@cony' # getpass.getpass("Password:")
+    getpass.getpass("Password:")
 
     # Get class number
     classnumber = str(sys.argv[2])

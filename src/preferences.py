@@ -6,7 +6,7 @@ class Preferences():
     webdriver = '0'  # 0 = firefox, 1 = phantom
     MAXCLASSES = 7
     MAXLINKEDCLASSES = 3
-    botTimeout = 4 # time in seconds
+    botTimeout = 2.5 # time in seconds
 
     freshStart = datetime.datetime.strptime(
                 "4/20/15/07/00/02", "%m/%d/%y/%H/%M/%S")

@@ -1,0 +1,9 @@
+- search for 'derived' buttons if you can't find the button. Or maybe in the class 'SSSBUTTON_CONFIRMLINK'
+
+- fix waiting!!
+
+- the class
+
+- go back if the class number is a duplicate and try to enroll
+
+- on fail, log in again
