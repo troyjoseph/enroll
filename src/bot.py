@@ -405,7 +405,7 @@ class Bot():
 if __name__ == '__main__':
     if len(sys.argv) != 4 and len(sys.argv) != 3:
         print 'Wrong number of args!'
-        print len(sys.argv)
+        print "Please run the command: python src/bot.py <netid> <classtoadd> <disscusion (optional)>"
         sys.exit(1)
 
     b = Bot()
@@ -414,7 +414,7 @@ if __name__ == '__main__':
     netid = str(sys.argv[1])
 
     # Get password
-    getpass.getpass("Password:")
+    password = getpass.getpass("Password:")
 
     # Get class number
     classnumber = str(sys.argv[2])
@@ -424,5 +424,4 @@ if __name__ == '__main__':
         secnumber = str(sys.argv[3])
         b.addClass(netid, password, classnumber, secnumber, repeat=True)
     else:
-        secnumber = str(sys.argv[3])
         b.addClass(netid, password, classnumber, repeat=True)
