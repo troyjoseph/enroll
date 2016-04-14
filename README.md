@@ -1,6 +1,6 @@
 ## installation
-pip install -r requirements.txt
-brew install phantomjs (apt-get install phantomjs)
+- pip install -r requirements.txt
+- brew install phantomjs (apt-get install phantomjs)
 
 ## usage
 python src/bot.py <netid> <classtoadd> <disscusion (optional)>

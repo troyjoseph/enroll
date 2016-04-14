@@ -2,3 +2,4 @@
 bot_*
 *.DS_Store
 venv/
+.log
